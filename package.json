@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "acorn": "^7.1.0",
+    "babel": "^6.23.0",
     "json-formatter-js": "^2.2.1",
     "serialize-javascript": "^2.1.2",
     "sirv-cli": "^0.4.4"

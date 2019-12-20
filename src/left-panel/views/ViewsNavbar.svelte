@@ -605,6 +605,16 @@
       .attr('class', 'fas')
       .attr('font-size', '12px')
       .attr('cursor', 'pointer')
+      .on('mouseover', function(d) {
+            let statesRendered = document.createElement('pre');
+            let propsRendered = document.createElement('pre');
+            statesRoot.innerHTML = '';
+            propsRoot.innerHTML = '';
+            statesRendered.innerHTML = syntaxHighlight(JSON.stringify(d.data.data.data.State, null, 2));
+            statesRoot.appendChild(statesRendered);
+            propsRendered.innerHTML = syntaxHighlight(JSON.stringify(d.data.data.data.Props, null, 2));
+            propsRoot.appendChild(propsRendered);
+          })
       .text((d) => d.children ? '\uf107' : d._children ? '\uf105' : "");
 
     // adding file or folder
@@ -622,9 +632,17 @@
       .attr("dx", 5.5)
       .text((d) => d.data.id)
       .style("fill","white")
-      .on("mouseover", function (d) {
-        d3.select(this).classed("selected", true);
-      })
+      .on('mouseover', function(d) {
+            d3.select(this).classed("selected", true);
+            let statesRendered = document.createElement('pre');
+            let propsRendered = document.createElement('pre');
+            statesRoot.innerHTML = '';
+            propsRoot.innerHTML = '';
+            statesRendered.innerHTML = syntaxHighlight(JSON.stringify(d.data.data.data.State, null, 2));
+            statesRoot.appendChild(statesRendered);
+            propsRendered.innerHTML = syntaxHighlight(JSON.stringify(d.data.data.data.Props, null, 2));
+            propsRoot.appendChild(propsRendered);
+          })
       .attr('cursor', 'pointer')
       .on("mouseout", function (d) {
         d3.selectAll(".selected").classed("selected", false);
