@@ -11,7 +11,7 @@
 
 <style>
   #views-display {
-    background-color: rgb(37, 42, 50);;
+    background-color:black;
     overflow: auto; 
     padding: 0 10px;
   }
