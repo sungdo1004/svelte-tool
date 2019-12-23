@@ -233,6 +233,26 @@
           
         })
      }
+     
+     console.log('url before remove dup', urls)
+     //removes duplicate urls
+     for (let i = 0 ; i < urls.length; i++) {
+       urls[i] = urls[i].url.replace('.svelte', '')
+       for (let j = urls[i].length - 1; j > 0; j--) {
+         if (urls[i][j] === '/' || urls[i][j] === `\\`) {
+           urls[i] = urls[i].slice(j + 1, urls[i].length)
+           console.log('each urls', urls[i])
+         }
+       }
+     }
+     urls = [...new Set(urls)]
+
+
+
+
+     console.log('url in the beginning', urls)
+     console.log('AST in the beginning', AST)
+     console.log('d3preeeeee', D3PreTree)
      // runs next logic after async svelte.parse is completed
   setTimeout(() => {
       // modified D3PreTree so that it fits for D3 statify function 
@@ -241,21 +261,30 @@
         let temp = {}
         let key = Object.keys(eachObj)[0]
         let value = Object.values(eachObj)[0]
+        console.log('keyyyyyyyyyy', key)
         key = key.split('')
-        key.shift()
         key.pop()
         key.pop()
         key.pop()
+        console.log('key befreo', key)
+        for (let i = 0; i <key.length ; i++) {
+          if (/[A-Z]/.test(key[i])) {
+            console.log('uppcasecase at ',i)
+            key = key.slice(i, key.length )
+          }
+        }
         key = key.join('')
         temp[key] = value
         newD3Pre.push(temp)
       }
 
+      console.log('beginning of settimeout', newD3Pre)
+
       //declare global variable object to assemble component template
       let bigData= {}
 
 
-      //mapped out ASTP array so that it is easier to access the node that contains import declaration	
+      //mapped out AST array so that it is easier to access the node that contains import declaration	
       //iterated through the AST array and modified the source key to later match with url array to 	
       // combined into bigData object      
       AST = AST.map(obj => obj.instance.content.body)
@@ -264,12 +293,17 @@
         for (let j = 0; j < AST[i].length; j++) {
           if (AST[i][j].source.value !== 'svelte') {
             let obj = {}
+            console.log('trying to fix', AST[i][j].source.value)
             obj.type = AST[i][j].type
-            obj.source = AST[i][j].source.value.split('')
-            obj.source.shift()
-            obj.source.shift()
-            obj.source = obj.source.join('')
-            obj.source = obj.source.replace('.svelte', '')
+            if (AST[i][j].source.value.includes('./')) {
+              obj.source = AST[i][j].source.value.split('')
+              obj.source.shift()
+              obj.source.shift()
+              obj.source = obj.source.join('')
+              obj.source = obj.source.replace('.svelte', '')
+            } else {
+              obj.source = AST[i][j].source.value
+            }
             AST[i][j] = obj
           } else {
             let obj = {}
@@ -279,17 +313,43 @@
           }
         }
       }
+      console.log('after aST mapped', AST)
+
+      //filtering non-components (svelte)
+      let filteredAST  = []
+      for (let element of AST) {
+        let result = [];
+        for (let i = 0 ; i < element.length; i++) {
+          if (element[i].source.includes('svelte')) {
+            console.log('svelte detected', element[i])
+          } else {
+            result.push(element[i])
+          }
+        }
+        filteredAST.push(result)
+      }
+
+      console.log('testing filtere non,0', filteredAST)
+
+
 
       // modified the url array to match with AST array and then combined into 	
       // bigData object    
       for (let i = 0 ; i < urls.length; i++) {
-        for (let j = urls[i].url.length - 1; j > 0; j--) {
-          if (urls[i].url[j] === '/') {
-            urls[i].url = urls[i].url.slice(j+1, urls[i].url.length).replace('.svelte', '')
-          }
-        }
-        bigData[urls[i].url] = AST[i]
+        // for (let j = urls[i].url.length - 1; j > 0; j--) {
+        //   if (urls[i].url[j] === '/') {
+        //     urls[i].url = urls[i].url.slice(j+1, urls[i].url.length).replace('.svelte', '')
+        //   }
+        // }
+        // bigData[urls[i].url] = AST[i]
+        bigData[urls[i]] = filteredAST[i]
       }
+      console.log('bigData after combined', bigData)
+      // AST AND URLS SHOUDL BE SAME LENGTH 
+
+      
+
+      console.log('after filterering non-component', bigData)
 
 
       //iterate through bigData and made parent/child object and pushed into componentTemplate array
@@ -305,8 +365,15 @@
             }
           }
         }
+        if (componentTemplate.length === 0) {
+          let obj = {}
+          obj.child = Object.keys(bigData)[0]
+          obj.parent = ''
+          componentTemplate.push(obj)
+        }
       }
       componentChildren(bigData)
+      console.log('componentchidlren', componentTemplate)
 
 
       // added special obj for the top parent component for D3 stratifyy function to successfully create relevant array
@@ -347,11 +414,20 @@
       let templateStructured = d3.stratify()
                                   .id(function(d){return d.child})
 																	.parentId(function(d){return d.parent})
-																	(componentTemplate)
+                                  (componentTemplate)
+      console.log('templatestructured', templateStructured)
   
   
   //D3 rendering
   function chartRender(template) {
+
+    console.log('tempalte height', template.height)
+    if (template.height === 0) {
+      let needDeeper = document.createElement('h2')
+      needDeeper.innerHTML = `Cannot create Chart with single component!`
+      chartRoot.appendChild(needDeeper)
+      return;
+    }
       /////////// Margin and svg for tree
       let i = 0,
         duration = 400,
